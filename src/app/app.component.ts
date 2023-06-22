@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { ChildActivationEnd, Router } from '@angular/router';
+import { Observable, filter, first, map } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +8,14 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'declarative-programming';
+  firstRouteLoaded$: Observable<boolean>;
+
+  constructor(private router: Router) {
+    this.firstRouteLoaded$ = router.events.pipe(
+      filter(event => event instanceof ChildActivationEnd),
+      first(),
+      map(() => {
+        return true;
+      }))
+  }
 }

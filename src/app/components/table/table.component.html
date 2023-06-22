@@ -1,0 +1,49 @@
+<div class="mat-elevation-z8" *ngIf="dataSource$ | async as data; else spinner">
+  <mat-form-field class="medical-service-options">
+    <mat-label></mat-label>
+    <mat-select
+      [formControl]="chosenApi"
+    >
+      <mat-option
+        *ngFor="let api of availableAPIs"
+        [value]="api"
+      >
+      {{ api }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+
+  <mat-form-field class="input-width">
+    <mat-label>Filter</mat-label>
+    <input matInput
+    [formControl]="filter">
+  </mat-form-field>
+
+  <table mat-table class="full-width-table" matSort aria-label="Elements"
+  [dataSource]="data.dataSource" (matSortChange)="sort($event)" [matSortDisableClear]="true"
+  >
+    <!-- Id Column -->
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Id</th>
+      <td mat-cell *matCellDef="let row">{{row.id}}</td>
+    </ng-container>
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="text">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Text</th>
+      <td mat-cell *matCellDef="let row">{{row.text}}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+  <mat-paginator #paginator [length]="data.length" [pageIndex]="0" [pageSize]="3" (page)="onPage($event)"
+    [pageSizeOptions]="[3, 5, 10]" aria-label="Select page">
+  </mat-paginator>
+</div>
+
+<ng-template #spinner>
+  <mat-spinner></mat-spinner>
+</ng-template>

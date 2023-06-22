@@ -1,0 +1,13 @@
+
+<div class="wrapper">
+<div (mousedown)="paused$.next(true)" (mouseup)="paused$.next(false)" *ngIf="currentPhoto$ | async as photo">
+  <img [src]="photo" alt="Base64 Image">
+</div>
+
+
+<mat-slider min="1000" max="10000" step="500" showTickMarks discrete value="5000" (change)="changeDelay($event)" >
+  <input matSliderThumb>
+</mat-slider>
+
+<!-- <mat-slide-toggle (change)="toggleLoop($event)" defaults="" checked>Toggle loop</mat-slide-toggle> -->
+</div>
