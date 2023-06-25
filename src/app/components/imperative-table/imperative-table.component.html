@@ -22,7 +22,9 @@
   </mat-form-field>
 
 
-  <table mat-table class="full-width-table" matSort aria-label="Elements" [matSortDisableClear]="true">
+  <table mat-table class="full-width-table" matSort aria-label="Elements" [dataSource]="tableData.dataSource"
+  [matSortActive]="sort.active" [matSortDirection]="sort.direction"
+  (matSortChange)="onSort($event)"  [matSortDisableClear]="true">
     <!-- Id Column -->
     <ng-container matColumnDef="id">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Id</th>
@@ -40,10 +42,12 @@
   </table>
 
   <mat-paginator #paginator
-      [length]="dataSource.data.length"
-      [pageIndex]="0"
-      [pageSize]="5"
+      [length]="tableData.length"
+      [pageIndex]="pagination.page"
+      [pageSize]="pagination.pageSize"
       [pageSizeOptions]="[3, 5, 10]"
-      aria-label="Select page">
+      aria-label="Select page"
+      (page)="onPage($event)"
+      >
   </mat-paginator>
 </div>

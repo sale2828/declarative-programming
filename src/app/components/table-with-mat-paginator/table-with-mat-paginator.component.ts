@@ -6,7 +6,7 @@ import { BehaviorSubject, Observable, combineLatest, of } from 'rxjs';
 import { debounceTime, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { TableData } from 'src/app/models/table-data.interface';
 import { CatsApiService } from 'src/app/services/cats-api.service';
-import { TablePaginationModel } from 'src/app/services/models/table-pagination-model';
+import { TablePaginationModel } from 'src/app/models/table-pagination-model';
 import { RandomFactApiService } from 'src/app/services/random-facts-api.service';
 
 @Component({
@@ -53,7 +53,14 @@ export class TableWithMatPaginator {
   protected filter$ = this.filter.valueChanges.pipe(debounceTime(500), startWith(''));
   private dataTransformation$?: Observable<[PageEvent, Sort]>
   protected dataSource$?: Observable<TablePaginationModel<TableData>> = new Observable<TablePaginationModel<TableData>>()
-    .pipe(startWith({ dataSource: [], length: 0 }))
+    .pipe(startWith(
+      {
+        dataSource: [],
+        length: 0,
+        pagination: { page: 0, pageSize: 3 },
+        sort: { active: '', direction: '' }
+      } as TablePaginationModel<TableData>
+    ))
 
   constructor(private catsApiService: CatsApiService, private randomFactApiService: RandomFactApiService) {
 

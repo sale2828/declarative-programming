@@ -21,6 +21,7 @@
   </mat-form-field>
 
   <table mat-table class="full-width-table" matSort aria-label="Elements"
+  [matSortActive]="data.sort.active" [matSortDirection]="data.sort.direction"
   [dataSource]="data.dataSource" (matSortChange)="sort($event)" [matSortDisableClear]="true"
   >
     <!-- Id Column -->
@@ -39,7 +40,7 @@
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
   </table>
 
-  <mat-paginator #paginator [length]="data.length" [pageIndex]="0" [pageSize]="3" (page)="onPage($event)"
+  <mat-paginator #paginator [length]="data.length" [pageIndex]="data.pagination.page" [pageSize]="data.pagination.pageSize" (page)="onPage($event)"
     [pageSizeOptions]="[3, 5, 10]" aria-label="Select page">
   </mat-paginator>
 </div>
