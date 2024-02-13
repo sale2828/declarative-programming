@@ -1,6 +1,5 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   Input,
   OnChanges
@@ -9,13 +8,7 @@ import {
 @Component({
   selector: 'app-slideshow',
   template: '',
-  styles: [
-    `
-      :host {
-        height: 100%;
-      }
-    `,
-  ],
+  styles: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SlideshowComponent implements OnChanges {
@@ -27,8 +20,7 @@ export class SlideshowComponent implements OnChanges {
   private photoIndex = 0;
 
   constructor(
-    private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnChanges() {
     if (this.intervalRef) {
@@ -46,7 +38,6 @@ export class SlideshowComponent implements OnChanges {
     this.intervalRef = setInterval(() => {
       this.currentPhoto = this.photos[this.photoIndex];
 
-      this.cdr.markForCheck();
 
       if (this.photoIndex < 1) {
         clearInterval(this.intervalRef);

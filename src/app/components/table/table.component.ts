@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
-import { BehaviorSubject, combineLatest } from 'rxjs';
-import { debounceTime, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, combineLatest, of } from 'rxjs';
+import { catchError, debounceTime, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { ApiResponse, ApiStatus } from 'src/app/models/api-response';
 import { DataTransformation } from 'src/app/models/data-transformation.interface';
-import { Pagination } from 'src/app/models/pagination';
 import { TableData } from 'src/app/models/table-data.interface';
-import { CatsApiService } from 'src/app/services/cats-api.service';
 import { TablePaginationModel } from 'src/app/models/table-pagination-model';
+import { CatsApiService } from 'src/app/services/cats-api.service';
+import { transformData } from 'src/app/utils';
 import { MonsterApiService } from '../../services/monster-api.service';
 
 @Component({
@@ -19,7 +20,9 @@ import { MonsterApiService } from '../../services/monster-api.service';
 })
 export class TableComponent {
   displayedColumns = ['id', 'text'];
-  availableAPIs = ['cats', 'monsters']
+  availableAPIs = ['cats', 'monsters'];
+  spinnerVisible: boolean = true;
+  apiStatus = ApiStatus;
 
   protected filter = new FormControl<string | null>(null);
   protected chosenApi = new FormControl<string>('cats');
@@ -27,70 +30,71 @@ export class TableComponent {
   private onApiChange$ = this.chosenApi.valueChanges.pipe(startWith(this.chosenApi.value),
     tap(() => {
       this.filter.setValue(null, { emitEvent: false });
-
-      this.dataChange$.next({
+      this.dataTransformation$.next({
         filter: this.filter.value,
         pagination: { page: 0, pageSize: 3 },
         sort: { active: '', direction: '' }
       });
     }))
 
-  private dataChange$ = new BehaviorSubject<DataTransformation>({
+  private dataTransformation$ = new BehaviorSubject<DataTransformation>({
     filter: this.filter.value,
     pagination: { page: 0, pageSize: 3 },
     sort: { active: '', direction: '' }
   });
 
-  protected dataSource$ = combineLatest({
-    dataChange: this.dataChange$,
+  protected dataSource$: Observable<ApiResponse<TablePaginationModel<TableData>>> = combineLatest({
+    dataTransformation: this.dataTransformation$,
     apiToChoose: this.onApiChange$
-  })
-    .pipe(
-      debounceTime(0),
-      switchMap(({ dataChange: dataTransformation, apiToChoose }) => {
-        let apiCall = apiToChoose === 'cats' ? this.catsApiService.getCatFacts()
-          : this.monsterApiService.getMonsters();
-        return apiCall.pipe(map((rawData) => { return { rawData, dataChange: dataTransformation } }))
-      }
-      ), map(({ rawData, dataChange: dataTransformation }) => {
-        let data = rawData.filter(data => data.text.toLowerCase().includes(dataTransformation.filter?.toLowerCase() || ''))
-        data = this.setPagination(data, dataTransformation.pagination);
-        data = this.sortData(data, dataTransformation.sort);
-        return { dataSource: data, length: rawData.length, pagination: dataTransformation.pagination, sort: dataTransformation.sort } as TablePaginationModel<TableData>
+  }).pipe(
+    tap(() => this.spinnerVisible = true),
+    debounceTime(0),
+    switchMap(({  dataTransformation, apiToChoose }) =>
+      this.getData(dataTransformation, apiToChoose)
+    ),
+    tap(() => this.spinnerVisible = false)
+  );
+
+  private getData(dataTransformation: DataTransformation, apiToChoose: string | null): Observable<ApiResponse<TablePaginationModel<TableData>>> {
+    let apiCall = apiToChoose === 'cats'
+      ? this.catsApiService.getCatFacts() :
+      this.monsterApiService.getMonsters();
+
+    return apiCall.pipe(
+      map((rawData) => {
+        let data = transformData(rawData, dataTransformation.sort, dataTransformation.pagination, dataTransformation.filter)
+        return {
+          status: ApiStatus.success,
+          data: {
+            dataSource: data,
+            length: rawData.length,
+            pagination: dataTransformation.pagination,
+            sort: dataTransformation.sort
+          },
+          error: undefined
+        }
+      }),
+      catchError((error) => {
+        return of({
+          status: ApiStatus.error,
+          data: undefined,
+          error: error
+        })
       }))
+  }
 
   constructor(private catsApiService: CatsApiService, private monsterApiService: MonsterApiService) {
     this.filter.valueChanges.pipe(debounceTime(500), tap((x) => {
-      this.dataChange$.next({ ...this.dataChange$.value, filter: x });
-    }))
-  }
-
-  private sortData(data: Array<TableData>, sort: Sort): Array<TableData> {
-    if (sort.direction === '') {
-      return data;
-    }
-    const columnName = sort.active;
-    if (sort.direction === 'asc') {
-      return data.sort((a, b) => {
-        return a[columnName as keyof TableData].localeCompare(b[columnName as keyof TableData]);
-      })
-    }
-
-    return data.sort((a, b) => {
-      return b[columnName as keyof TableData].localeCompare(a[columnName as keyof TableData]);
-    })
-  }
-
-  private setPagination(data: Array<TableData>, pagination: Pagination): Array<TableData> {
-    return data.slice(pagination.page * pagination.pageSize, pagination.page * pagination.pageSize + pagination.pageSize)
+      this.dataTransformation$.next({ ...this.dataTransformation$.value, filter: x });
+    })).subscribe();
   }
 
   protected sort(sort: Sort): void {
-    this.dataChange$.next({ ...this.dataChange$.value, sort });
+    this.dataTransformation$.next({ ...this.dataTransformation$.value, sort });
   }
 
   protected onPage($event: PageEvent): void {
-    this.dataChange$.next({ ...this.dataChange$.value, pagination: { page: $event.pageIndex, pageSize: $event.pageSize } });
+    this.dataTransformation$.next({ ...this.dataTransformation$.value, pagination: { page: $event.pageIndex, pageSize: $event.pageSize } });
   }
 
 }

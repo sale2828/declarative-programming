@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
-import { MatSlideToggleChange } from '@angular/material/slide-toggle';
-import { MatSlider, MatSliderDragEvent } from '@angular/material/slider';
-import { BehaviorSubject, EMPTY, NEVER, combineLatest, concatMap, delayWhen, expand, from, iif, of, switchMap, tap, timer } from 'rxjs';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { MatSliderDragEvent } from '@angular/material/slider';
+import { BehaviorSubject, EMPTY, NEVER, combineLatest, concatMap, delayWhen, expand, from, iif, of, switchMap, timer } from 'rxjs';
 import { photos } from 'src/assets/slideshow-images';
 
 @Component({
@@ -30,9 +29,6 @@ export class SlideshowComponent {
     concatMap((photo) => of(photo).pipe(delayWhen(() => this.calculateDelay$)))
   );
 
-  // playCurrentPhotos$ = from(photos).pipe(
-  //   concatMap((photo) => of(photo).pipe(delayWhen(() => this.calculateDelay$)))
-  // );
 
   currentPhoto$ = combineLatest([this.currentPhotos$, this.staticPhoto$]).pipe(
     switchMap(([_, staticPhoto]) =>

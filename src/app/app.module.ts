@@ -9,6 +9,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -16,12 +19,9 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './components/header/header.component';
 import { ImperativeTableComponent } from './components/imperative-table/imperative-table.component';
+import { SlideshowComponent } from './components/slideshow/slideshow.component';
 import { TableWithMatPaginator } from './components/table-with-mat-paginator/table-with-mat-paginator.component';
 import { TableComponent } from './components/table/table.component';
-import { SlideshowComponent } from './components/slideshow/slideshow.component';
-import { SlideshowImperativeComponent } from './components/slideshow-imperative/slideshow-imperative.component';
-import {MatSliderModule} from '@angular/material/slider';
-import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 
 @NgModule({
   declarations: [
@@ -30,8 +30,7 @@ import {MatSlideToggleModule} from '@angular/material/slide-toggle';
     TableComponent,
     ImperativeTableComponent,
     TableWithMatPaginator,
-    SlideshowComponent,
-    SlideshowImperativeComponent
+    SlideshowComponent
   ],
   imports: [
     BrowserModule,
@@ -49,7 +48,8 @@ import {MatSlideToggleModule} from '@angular/material/slide-toggle';
     MatSelectModule,
     FormsModule,
     MatSliderModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    MatSnackBarModule
   ],
   providers: [],
   bootstrap: [AppComponent]

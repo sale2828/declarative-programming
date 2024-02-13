@@ -1,66 +1,42 @@
-import { Component } from '@angular/core';
-import { Observable, Subject, takeUntil, tap } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Sort } from '@angular/material/sort';
+import { Observable, Subject, catchError, of, takeUntil, tap } from 'rxjs';
+import { Pagination } from 'src/app/models/pagination';
 import { TableData } from 'src/app/models/table-data.interface';
 import { CatsApiService } from 'src/app/services/cats-api.service';
+import { transformData } from 'src/app/utils';
 import { MonsterApiService } from './../../services/monster-api.service';
-import { Sort } from '@angular/material/sort';
-import { PageEvent } from '@angular/material/paginator';
-import { Pagination } from 'src/app/models/pagination';
 import { TableModel } from './models/table-model.interface';
 
 @Component({
   selector: 'app-imperative-table',
   templateUrl: './imperative-table.component.html',
-  styleUrls: ['./imperative-table.component.scss']
+  styleUrls: ['./imperative-table.component.scss'],
 })
-export class ImperativeTableComponent {
+export class ImperativeTableComponent implements OnInit, OnDestroy {
   tableData: TableModel<TableData> = { dataSource: [], length: 0 }
   pagination: Pagination = { page: 0, pageSize: 3 };
   sort: Sort = { active: '', direction: '' };
   unsubscribe: Subject<void> = new Subject();
+  spinnerVisible: boolean = true;
 
 
   displayedColumns = ['id', 'text'];
   availableAPIs = ['cats', 'monsters'];
 
   protected filter: string = '';
-  protected chosenApi: string = '';
+  protected chosenApi: string = 'cats';
 
-  constructor(private catsApiService: CatsApiService, private monsterApiService: MonsterApiService) {
+  constructor(
+    private catsApiService: CatsApiService,
+    private monsterApiService: MonsterApiService,
+    private snackBar: MatSnackBar
+  ) {
   }
 
-  protected chooseApi(): void {
-    this.pagination = { page: 0, pageSize: 3 };
-    this.sort = { active: '', direction: '' };
-    this.getData();
-  }
-
-  private sortData(data: Array<TableData>, sort: Sort): Array<TableData> {
-    if (sort.direction === '') {
-      return data;
-    }
-    const columnName = sort.active;
-    if (sort.direction === 'asc') {
-      return data.sort((a, b) => {
-        return a[columnName as keyof TableData].localeCompare(b[columnName as keyof TableData]);
-      })
-    }
-
-    return data.sort((a, b) => {
-      return b[columnName as keyof TableData].localeCompare(a[columnName as keyof TableData]);
-    })
-  }
-
-  private setPagination(data: Array<TableData>, pageSize: number, page: number): Array<TableData> {
-    return data.slice(page * pageSize, page * pageSize + pageSize)
-  }
-
-  protected onPage(pageEvent: PageEvent) {
-    this.pagination = { page: pageEvent.pageIndex, pageSize: pageEvent.pageSize };
-    this.getData();
-  }
-  protected onSort(sort: Sort) {
-    this.sort = sort;
+  ngOnInit(): void {
     this.getData();
   }
 
@@ -75,13 +51,41 @@ export class ImperativeTableComponent {
     }
   }
 
-  private getData(): void {
+  protected getData(): void {
     this.unsubscribe.next()
+    this.spinnerVisible = true;
     this.setApi(this.chosenApi).pipe(takeUntil(this.unsubscribe),
       tap((x) => {
-      this.tableData = { dataSource: x, length: x.length };
-      this.tableData.dataSource = this.setPagination(x, this.pagination.pageSize, this.pagination.page);
-      this.tableData.dataSource = this.sortData(this.tableData.dataSource, this.sort);
-    })).subscribe();
+        let data = transformData(x, this.sort, this.pagination, this.filter)
+        this.tableData = { dataSource: data, length: x.length };
+      }),
+      catchError((error: Error) => {
+        this.tableData = { dataSource: [], length: 0 }
+
+        //handle error here
+        this.snackBar.open(error.message,'Error', {duration: 3000} )
+
+        return of(error);
+      })).subscribe(() => this.spinnerVisible = false);
+  }
+
+  protected chooseApi(): void {
+    this.pagination = { page: 0, pageSize: 3 };
+    this.sort = { active: '', direction: '' };
+    this.getData();
+  }
+
+  protected onPage(pageEvent: PageEvent) {
+    this.pagination = { page: pageEvent.pageIndex, pageSize: pageEvent.pageSize };
+    this.getData();
+  }
+  protected onSort(sort: Sort) {
+    this.sort = sort;
+    this.getData();
+  }
+
+  ngOnDestroy(): void {
+    this.unsubscribe.next();
+    this.unsubscribe.complete();
   }
 }

@@ -1,49 +1,57 @@
-<div class="mat-elevation-z8" *ngIf="dataSource$ | async as data; else spinner">
-  <mat-form-field class="medical-service-options">
-    <mat-label></mat-label>
-    <mat-select
-      [formControl]="chosenApi"
-    >
-      <mat-option
-        *ngFor="let api of availableAPIs"
-        [value]="api"
-      >
+<mat-form-field class="medical-service-options">
+  <mat-label></mat-label>
+  <mat-select [formControl]="chosenApi">
+    <mat-option *ngFor="let api of availableAPIs" [value]="api">
       {{ api }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+    </mat-option>
+  </mat-select>
+</mat-form-field>
 
 
-  <mat-form-field class="input-width">
-    <mat-label>Filter</mat-label>
-    <input matInput
-    [formControl]="filter">
-  </mat-form-field>
+<mat-form-field class="input-width">
+  <mat-label>Filter</mat-label>
+  <input matInput [formControl]="filter">
+</mat-form-field>
 
-  <table mat-table class="full-width-table" matSort aria-label="Elements"
-  [matSortActive]="data.sort.active" [matSortDirection]="data.sort.direction"
-  [dataSource]="data.dataSource" (matSortChange)="sort($event)" [matSortDisableClear]="true"
-  >
-    <!-- Id Column -->
-    <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Id</th>
-      <td mat-cell *matCellDef="let row">{{row.id}}</td>
+<div class="mat-elevation-z8" *ngIf="dataSource$ | async as response; else spinner">
+  <ng-container *ngIf="!spinnerVisible">
+
+    <ng-container *ngIf="response.status === apiStatus.success && response.data">
+      <table mat-table class="full-width-table" matSort aria-label="Elements"
+        [matSortActive]="response.data.sort.active" [matSortDirection]="response.data.sort.direction"
+        [dataSource]="response.data.dataSource" (matSortChange)="sort($event)" [matSortDisableClear]="true">
+        <!-- Id Column -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Id</th>
+          <td mat-cell *matCellDef="let row">{{row.id}}</td>
+        </ng-container>
+
+        <!-- Name Column -->
+        <ng-container matColumnDef="text">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Text</th>
+          <td mat-cell *matCellDef="let row">{{row.text}}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <mat-paginator #paginator [length]="response.data.length" [pageIndex]="response.data.pagination.page"
+        [pageSize]="response.data.pagination.pageSize" (page)="onPage($event)" [pageSizeOptions]="[3, 5, 10]"
+        aria-label="Select page">
+      </mat-paginator>
     </ng-container>
 
-    <!-- Name Column -->
-    <ng-container matColumnDef="text">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Text</th>
-      <td mat-cell *matCellDef="let row">{{row.text}}</td>
+    <ng-container *ngIf="response.status === apiStatus.error">
+      <div>{{response.error!.message}}</div>
     </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-  </table>
-
-  <mat-paginator #paginator [length]="data.length" [pageIndex]="data.pagination.page" [pageSize]="data.pagination.pageSize" (page)="onPage($event)"
-    [pageSizeOptions]="[3, 5, 10]" aria-label="Select page">
-  </mat-paginator>
+  </ng-container>
+  <ng-container *ngIf="spinnerVisible">
+    <ng-container *ngTemplateOutlet="spinner"></ng-container>
+  </ng-container>
 </div>
+
 
 <ng-template #spinner>
   <mat-spinner></mat-spinner>
